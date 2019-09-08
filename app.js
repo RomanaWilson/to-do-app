@@ -1,65 +1,101 @@
 function onReady() {
-  const addToDoForm = document.getElementById('addToDoForm');
-  const newToDoText = document.getElementById('newToDoText');
-  const toDoList = document.getElementById('toDoList');
+  const ADD_TODO_FORM = document.getElementById('addToDoForm');
+  let toDos = [];
 
-  addToDoForm.addEventListener('submit', () => {
-    event.preventDefault();
+  // Loads stored toDos from storage if defined.
+  if (localStorage.getItem("todos")) {
+    toDos = JSON.parse(localStorage.getItem("todos"));
+  }
 
-// get the text
-  let title = newToDoText.value;
+  let id = 0;
 
+  // Creates a New ToDo
+  function createNewToDo(){
 
-// create a new li
-   let newLi = document.createElement('li');
+    //get the new Todo text from the form
+    const NEW_TODO_TEXT = document.getElementById('newToDoText');
 
-// create a new input
-   let checkbox = document.createElement('input');
-// set the input's type to checkbox
-    checkbox.type = "checkbox";
+    //No 'blank' toDos
+    if(!NEW_TODO_TEXT.value){ return; }
 
+    //new ToDo
+    toDos.push({
+      title: NEW_TODO_TEXT.value,
+      complete: false,
+      id: id
+    });
 
-//delete button
-    let deleteBtn = document.createElement('button');
-    deleteBtn.textContent = "Delete";
+    //Wrapup: increment and update storage and UI
+    console.log(toDos[id]);
+    NEW_TODO_TEXT.value = '';
+    id++;
+    localStorage.setItem("todos", JSON.stringify(toDos));
+    renderTheUI();
+  }
 
-    deleteBtn.addEventListener('click', function(event){
-       let buttonLiText = this.parentElement.childNodes[0].textContent;
-// ------
-// ------
-    toDoList.removeChild(this.parentElement);
+  //Renders UI - called whenever the state is updated, i.e. new ToDo
+  function renderTheUI() {
+    const TO_DO_LIST = document.getElementById('toDoList');
+    TO_DO_LIST.textContent = '';
+    toDos.forEach(function(toDo) {
+      //Create ToDo list Elements
+      const NEW_LI = document.createElement('li');
 
-    toDos.forEach(function(currentToDo, index){
-      //
-      //
-
-      if (currentToDo === buttonLiText){
-        //remove from the array
-        toDos.splice(index,1);
+      const CHECKBOX = document.createElement('input');
+      CHECKBOX.type = "checkbox";
+      //checked is set as completed in the todo object
+      if (toDo.complete) {
+        CHECKBOX.checked = true
+      } else {
+        CHECKBOX.checked = false
       }
 
-    });
-  })
+      const DELETE = document.createElement('button');
+      DELETE.textContent = "Delete";
+
+      //Build Event Listenr for the Checkbox
+      CHECKBOX.addEventListener('click', event => {
+        if (CHECKBOX.checked == true) {
+          toDo.complete = true;
+        } else {
+          toDo.complete = false;
+        };
+        console.log(toDos);
+        //Store modified array
+        localStorage.setItem("todos", JSON.stringify(toDos));
+      });
 
 
-// set the title
-    newLi.textContent = title;
+      //Build Event Listner for each Delete Button
+      DELETE.addEventListener('click', event => {
+         toDos = toDos.filter(function(item){
+            return item.id !== toDo.id;
+         });
+         //Store modified array
+         localStorage.setItem("todos", JSON.stringify(toDos));
+         renderTheUI();
+      });
 
-// attach the checkbox to the li
-    newLi.appendChild(checkbox);
+      //Add the todo List text (from input)
+      NEW_LI.textContent = toDo.title;
 
-// delete deleteBtn
-    newLi.appendChild(deleteBtn);
+      //Update DOM
+      TO_DO_LIST.appendChild(NEW_LI);
+      NEW_LI.appendChild(CHECKBOX);
+      NEW_LI.appendChild(DELETE);
+    }) //end for each function
+  }
 
-// attach the li to the ul
-   toDoList.appendChild(newLi);
-
-
-//empty the input
-   newToDoText.value = '';
-
+  // Event Listners
+  addToDoForm.addEventListener('submit', event => {
+    event.preventDefault();
+    createNewToDo();
   });
+
+  // Render
+  renderTheUI();
 }
+
 
 window.onload = function() {
   onReady();
